@@ -1,0 +1,38 @@
+name: Reac Universal CI
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Version de Node.js a utilizar'
+        type: string
+        required: false
+        default: '22'
+      project-dir:
+        description: 'Directorio raiz del proyecto (por si esta en una subcarpeta)'
+        type: string
+        required: false
+        default: '.'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.project-dir }}
+
+      steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/setup-node@v4
+          with:
+            node-version: ${{ inputs.node-version }}
+            cache: npm
+            cache-dependency-path: ${{ inputs.project-dir }}/package-lock.json
+        
+        - run: npm ci
+
+        - run: npm run lint --if-present
+
+        - run: npm test -- --watchAll=false --passWithNoTests
+
+        - run: npm run build --if-present
